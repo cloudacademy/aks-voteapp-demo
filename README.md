@@ -108,11 +108,7 @@ az aks create \
   --generate-ssh-keys \
   --network-policy azure \
   --service-principal $APPID \
-  --client-secret $PASSWD \
-  --zones {1, 2, 3} \
-  --enable-rbac \
-  --enable-cluster-autoscaler true
-
+  --client-secret $PASSWD 
 ```
 
 This takes between **5-10 minutes** to complete so sit back and relax, its major chill time :+1:
