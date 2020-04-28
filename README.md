@@ -81,7 +81,7 @@ az role assignment create \
 
 ## STEP 1.5:
 
-Create the AKS cluster and place the in the vnet subnet previously created
+Create the AKS cluster and place it in the vnet subnet previously created
 
 ```
 SUBNETID=$(az network vnet subnet show \
@@ -417,9 +417,14 @@ spec:
 EOF
 ```
 
-Query the Nginx Ingress Controller and determine the Public IP address that has been assigned to it.
-This will be used to create the API's FQDN, which in turn will then be used within the API's Ingress resource which is
-designed to perform host based path routing
+## STEP 10.3:
+
+Query the Nginx Ingress Controller and determine the public ip address that has been assigned to it.
+
+Notes
+1. The public IP address will be used to create the API's FQDN
+2. The API FQDN will be used to within the API's Ingress resource for host based path routing.
+3. The https://nip.io/ dynamic DNS service is being used to provide wildcard DNS
 
 ```
 kubectl get svc aks-nginx-ingress-controller -o json
@@ -429,8 +434,6 @@ echo INGRESS_PUBLIC_IP: $INGRESS_PUBLIC_IP
 API_PUBLIC_FQDN=api.$INGRESS_PUBLIC_IP.nip.io
 echo API_PUBLIC_FQDN: $API_PUBLIC_FQDN
 ```
-
-## STEP 10.3:
 
 API: create **ingress** resource
 
