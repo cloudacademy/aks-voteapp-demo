@@ -133,12 +133,42 @@ kubectl config current-context
 
 Install the Nginx Ingress Controller. This will allow us to direct inbound exteranl calls to the Frontend and API services that will be deployed into the AKS cluster.
 
+## STEP 3.1:
+
+Use Helm to install the Nginx Ingress Controller.
+
+Notes:
+1. The ```helm``` client needs to be installed locally
+2. This has beem successfully tested with ```helm``` version v3.0.2
+3. The ```helm``` client authenticates to the AKS cluster using the same ```~/.kube/config``` credentials established earlier
+
 ```
 helm version
 helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 helm repo update
 helm search repo stable
 helm install aks-nginx-ingress stable/nginx-ingress
+```
+
+## STEP 3.2:
+
+Query the Nginx Ingress Controller and determine the public ip address that has been assigned to it.
+
+Notes:
+1. The public IP address will be used to create both the API and Frontend service FQDNs
+2. The API FQDN will be used to within the API's Ingress resource for host based path routing
+3. The https://nip.io/ dynamic DNS service is being used to provide wildcard DNS
+
+```
+kubectl get svc aks-nginx-ingress-controller -o json
+INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-controller -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo INGRESS_PUBLIC_IP: $INGRESS_PUBLIC_IP
+
+API_PUBLIC_FQDN=api.$INGRESS_PUBLIC_IP.nip.io
+FRONTEND_PUBLIC_FQDN=frontend.$INGRESS_PUBLIC_IP.nip.io
+
+echo API_PUBLIC_FQDN: $API_PUBLIC_FQDN
+echo FRONTEND_PUBLIC_FQDN: $FRONTEND_PUBLIC_FQDN
 ```
 
 # STEP 4:
@@ -419,20 +449,6 @@ EOF
 
 ## STEP 10.3:
 
-Query the Nginx Ingress Controller and determine the public ip address that has been assigned to it.
-
-Notes
-1. The public IP address will be used to create the API's FQDN
-2. The API FQDN will be used to within the API's Ingress resource for host based path routing.
-3. The https://nip.io/ dynamic DNS service is being used to provide wildcard DNS
-
-```
-kubectl get svc aks-nginx-ingress-controller -o json
-INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-controller -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-echo INGRESS_PUBLIC_IP: $INGRESS_PUBLIC_IP
-
-API_PUBLIC_FQDN=api.$INGRESS_PUBLIC_IP.nip.io
-echo API_PUBLIC_FQDN: $API_PUBLIC_FQDN
 ```
 
 API: create **ingress** resource
