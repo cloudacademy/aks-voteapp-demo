@@ -21,10 +21,10 @@ Along the way, you'll get to see how to work with the following AKS cluster reso
 
 ![AKSDeployment](./docs/AKSDeployment.png)
 
-# STEP1:
+# STEP 1:
 Create a new AKS cluster
 
-## STEP1.1:
+## STEP 1.1:
 
 Define the name of the cluster and the azure resource group it will be allocated in
 
@@ -33,7 +33,7 @@ CLUSTER_NAME=akstest
 RESOURCE_GROUP=aks
 ```
 
-## STEP1.2:
+## STEP 1.2:
 
 Create a new service principal. The AKS cluster will later be created with this.
 
@@ -47,7 +47,7 @@ echo APPID: $APPID
 echo PASSWD: $PASSWD
 ```
 
-## STEP1.3:
+## STEP 1.3:
 
 Create a new vnet and subnet for the AKS cluster
 
@@ -60,7 +60,7 @@ az network vnet create \
     --subnet-prefix 10.240.0.0/16
 ```
 
-## STEP1.4:
+## STEP 1.4:
 
 Assign the contributor role to the service principal scoped on the vnet previously created
 
@@ -79,7 +79,7 @@ az role assignment create \
   --role Contributor
 ```
 
-## STEP1.5:
+## STEP 1.5:
 
 Create the AKS cluster and place the in the vnet subnet previously created
 
@@ -114,7 +114,7 @@ This takes between **5-10 minutes** to complete so sit back and relax, its major
 Congrats!! 
 You've just baked yourself a fresh AKS Kubernetes cluster!!
 
-# STEP2:
+# STEP 2:
 
 Test the kubectl client cluster authencation
 
@@ -129,7 +129,7 @@ kubectl config get-contexts
 kubectl config current-context
 ```
 
-# STEP3:
+# STEP 3:
 
 Install the Nginx Ingress Controller. This will allow us to direct inbound exteranl calls to the Frontend and API services that will be deployed into the AKS cluster.
 
@@ -141,7 +141,7 @@ helm search repo stable
 helm install aks-nginx-ingress stable/nginx-ingress
 ```
 
-# STEP4:
+# STEP 4:
 
 Create the ```cloudacademy``` project (namespace)
 
@@ -160,7 +160,7 @@ Configure the ```cloudacademy``` namespace to be the default
 kubectl config set-context --current --namespace cloudacademy
 ```
 
-# STEP5:
+# STEP 5:
 
 Display the available AKS storage classes. We use the default storage class in the following MongoDb deployment.
 
@@ -168,7 +168,7 @@ Display the available AKS storage classes. We use the default storage class in t
 kubectl get storageclass
 ```
 
-# STEP6:
+# STEP 6:
 
 Create a new Mongo StatefulSet name ```mongo```
 
@@ -250,7 +250,7 @@ Display the MongoDB Pods, Persistent Volumes and Persistent Volume Claims
 kubectl get pod,pv,pvc
 ```
 
-# STEP7:
+# STEP 7:
 
 Create a new Headless Service for Mongo named ```mongo```
 
@@ -294,7 +294,7 @@ for i in {0..2}; do host mongo-$i.mongo; done
 exit
 ```
 
-# STEP8:
+# STEP 8:
 
 Initialise the Mongo database replica set
 
@@ -315,7 +315,7 @@ kubectl exec -it mongo-0 mongo < db.init.js
 kubectl exec -it mongo-0 -- mongo --eval "rs.status()"
 ```
 
-# STEP9:
+# STEP 9:
 
 Load the initial voting app data into the Mongo database
 
@@ -338,13 +338,13 @@ kubectl exec -it mongo-0 mongo < db.load.js
 kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
 ```
 
-# STEP10:
+# STEP 10:
 
 ![AKSDeployment - API](./docs/AKSDeployment-API.png)
 
 Deploy the API consisting of a Deployment, Service, and Ingress:
 
-## STEP10.1:
+## STEP 10.1:
 
 API: create **deployment** resource
 
@@ -394,7 +394,7 @@ spec:
           successThreshold: 1
 ```
 
-## STEP10.2:
+## STEP 10.2:
 
 API: create **service** resource
 
@@ -430,7 +430,7 @@ API_PUBLIC_FQDN=api.$INGRESS_PUBLIC_IP.nip.io
 echo API_PUBLIC_FQDN: $API_PUBLIC_FQDN
 ```
 
-## STEP10.3:
+## STEP 10.3:
 
 API: create **ingress** resource
 
@@ -468,7 +468,7 @@ kubectl logs API_POD_NAME_HERE
 kubectl get svc
 ```
 
-# STEP11:
+# STEP 11:
 
 Test the API route url - test the ```/ok```, ```/languages```, and ```/languages/{name}``` endpoints
 
@@ -485,7 +485,7 @@ curl -s $API_PUBLIC_FQDN/languages/java | jq .
 curl -s $API_PUBLIC_FQDN/languages/nodejs | jq .
 ```
 
-# STEP12:
+# STEP 12:
 
 ![AKSDeployment](./docs/AKSDeployment-Frontend.png)
 
@@ -494,7 +494,7 @@ Create a new frontend Deployment
 Notes: 
 1. The value stored in the ```$API_PUBLIC_FQDN``` variable is injected into the frontend container's ```REACT_APP_APIHOSTPORT``` environment var - this tells the frontend where to send API AJAX calls to, once the frontend is loaded into the users browser
 
-## STEP12.1:
+## STEP 12.1:
 
 Frontend: create **deployment** resource
 
@@ -548,7 +548,7 @@ spec:
 EOF
 ```
 
-## STEP12.2:
+## STEP 12.2:
 
 Frontend: create **service** resource
 
@@ -571,7 +571,7 @@ spec:
 EOF
 ```
 
-## STEP12.3:
+## STEP 12.3:
 
 Frontend: create **ingress** resource
 
@@ -604,7 +604,7 @@ kubectl get pods
 kubectl get pods -l role=frontend
 ```
 
-# STEP13
+# STEP 13
 
 Use the ```curl``` command to test the application via the frontend route url
 
@@ -626,6 +626,6 @@ Now test the full end-to-end application using the Chrome browser...
 Note: Use the Developer Tools within the Chrome browser to record, filter, and observe the AJAX traffic (XHR) which is generated when any of the +1 vote buttons are clicked.
 
 
-# STEP14
+# STEP 14
 
 When you've finished with the AKS cluster and no longer need tear it down to avoid ongoing charges!!
