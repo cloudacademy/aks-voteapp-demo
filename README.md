@@ -97,6 +97,8 @@ az aks create \
   --name $CLUSTER_NAME \
   --resource-group $RESOURCE_GROUP \
   --node-count 2 \
+  --node-vm-size B2ms \
+  --vm-set-type VirtualMachineScaleSets \
   --kubernetes-version 1.15.10 \
   --network-plugin azure \
   --service-cidr 10.0.0.0/16 \
@@ -106,7 +108,11 @@ az aks create \
   --generate-ssh-keys \
   --network-policy azure \
   --service-principal $APPID \
-  --client-secret $PASSWD
+  --client-secret $PASSWD \
+  --zones {1, 2, 3} \
+  --enable-rbac \
+  --enable-cluster-autoscaler true
+
 ```
 
 This takes between **5-10 minutes** to complete so sit back and relax, its major chill time :+1:
