@@ -411,7 +411,7 @@ spec:
       containers:
       - name: api
         image: cloudacademydevops/api:v1
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         livenessProbe:
@@ -549,7 +549,7 @@ spec:
       containers:
       - name: frontend
         image: cloudacademydevops/frontend:v10
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
           - name: REACT_APP_APIHOSTPORT
             value: $API_PUBLIC_FQDN
