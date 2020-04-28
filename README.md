@@ -427,6 +427,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
           successThreshold: 1
+EOF
 ```
 
 ## STEP 10.2:
