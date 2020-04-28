@@ -19,7 +19,7 @@ Along the way, you'll get to see how to work with the following AKS cluster reso
 * IngressController
 * Ingress
 
-![AKSDeployment](./doc/AKSDeployment.png)
+![AKSDeployment](./doc/aks-deployment.png)
 
 # STEP 1:
 Create a new AKS cluster
@@ -197,13 +197,19 @@ kubectl config set-context --current --namespace cloudacademy
 
 # STEP 5:
 
+Deploy MongoDB 3 x ReplicaSet
+
+![AKSDeployment](./doc/aks-mongodb.png)
+
+## STEP 5.1:
+
 Display the available AKS storage classes. We use the default storage class in the following MongoDb deployment.
 
 ```
 kubectl get storageclass
 ```
 
-# STEP 6:
+## STEP 5.2:
 
 Create a new Mongo StatefulSet name ```mongo```
 
@@ -268,6 +274,8 @@ spec:
 EOF
 ```
 
+## STEP 5.3:
+
 Examine the Mongo Pods launch ordered sequence
 
 ```
@@ -285,7 +293,7 @@ Display the MongoDB Pods, Persistent Volumes and Persistent Volume Claims
 kubectl get pod,pv,pvc
 ```
 
-# STEP 7:
+## STEP 5.4:
 
 Create a new Headless Service for Mongo named ```mongo```
 
@@ -309,6 +317,8 @@ spec:
 EOF
 ```
 
+## STEP 5.5:
+
 Examine the Mongo Headless Service
 
 ```
@@ -329,7 +339,7 @@ for i in {0..2}; do host mongo-$i.mongo; done
 exit
 ```
 
-# STEP 8:
+## STEP 5.6:
 
 Initialise the Mongo database replica set
 
@@ -350,7 +360,7 @@ kubectl exec -it mongo-0 mongo < db.init.js
 kubectl exec -it mongo-0 -- mongo --eval "rs.status()"
 ```
 
-# STEP 9:
+## STEP 5.7:
 
 Load the initial voting app data into the Mongo database
 
@@ -373,13 +383,13 @@ kubectl exec -it mongo-0 mongo < db.load.js
 kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
 ```
 
-# STEP 10:
+# STEP 6:
 
-![AKSDeployment - API](./doc/AKSDeployment-API.png)
+![AKSDeployment - API](./doc/aks-api.png)
 
 Deploy the API consisting of a Deployment, Service, and Ingress:
 
-## STEP 10.1:
+## STEP 6.1:
 
 API: create **deployment** resource
 
@@ -430,7 +440,7 @@ spec:
 EOF
 ```
 
-## STEP 10.2:
+## STEP 6.2:
 
 API: create **service** resource
 
@@ -453,7 +463,7 @@ spec:
 EOF
 ```
 
-## STEP 10.3:
+## STEP 6.3:
 
 API: create **ingress** resource
 
@@ -478,6 +488,8 @@ spec:
 EOF
 ```
 
+## STEP 6.4:
+
 - Examine the rollout of the API deployment
 - Examine the pods to confirm that they are up and running
 - Examine the API pod log to see that it has successfully connected to the MongoDB replicaset
@@ -491,7 +503,7 @@ kubectl logs API_POD_NAME_HERE
 kubectl get svc
 ```
 
-# STEP 11:
+## STEP 6.5:
 
 Test the API route url - test the ```/ok```, ```/languages```, and ```/languages/{name}``` endpoints
 
@@ -508,16 +520,16 @@ curl -s $API_PUBLIC_FQDN/languages/java | jq .
 curl -s $API_PUBLIC_FQDN/languages/nodejs | jq .
 ```
 
-# STEP 12:
+# STEP 7:
 
-![AKSDeployment](./doc/AKSDeployment-Frontend.png)
+![AKSDeployment](./doc/aks-frontend.png)
 
 Create a new frontend Deployment
 
 Notes: 
 1. The value stored in the ```$API_PUBLIC_FQDN``` variable is injected into the frontend container's ```REACT_APP_APIHOSTPORT``` environment var - this tells the frontend where to send browser initiated API AJAX calls
 
-## STEP 12.1:
+## STEP 7.1:
 
 Frontend: create **deployment** resource
 
@@ -571,7 +583,7 @@ spec:
 EOF
 ```
 
-## STEP 12.2:
+## STEP 7.2:
 
 Frontend: create **service** resource
 
@@ -594,7 +606,7 @@ spec:
 EOF
 ```
 
-## STEP 12.3:
+## STEP 7.3:
 
 Frontend: create **ingress** resource
 
@@ -619,6 +631,8 @@ spec:
 EOF
 ```
 
+## STEP 7.4:
+
 Examine the rollout of the Frontend Deployment
 
 ```
@@ -627,7 +641,7 @@ kubectl get pods
 kubectl get pods -l role=frontend
 ```
 
-# STEP 13
+## STEP 7.5:
 
 Use the ```curl``` command to test the application via the frontend route url
 
@@ -642,7 +656,7 @@ Note: Use the Developer Tools within the Chrome browser to record, filter, and o
 
 ![VoteApp](./doc/voteapp.png)
 
-# STEP 14
+# STEP 8
 
 Query the MongoDb database directly to observe the updated vote data.
 
@@ -650,6 +664,6 @@ Query the MongoDb database directly to observe the updated vote data.
 kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
 ```
 
-# STEP 15
+# STEP 9
 
 When you've finished with the AKS cluster and no longer need tear it down to avoid ongoing charges!!
