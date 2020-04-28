@@ -640,7 +640,14 @@ Now test the full end-to-end application using the Chrome browser...
 
 Note: Use the Developer Tools within the Chrome browser to record, filter, and observe the AJAX traffic (XHR) which is generated when any of the +1 vote buttons are clicked.
 
-
 # STEP 14
+
+Query the MongoDb database directly to observe the updated vote data.
+
+```
+kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
+```
+
+# STEP 15
 
 When you've finished with the AKS cluster and no longer need tear it down to avoid ongoing charges!!
