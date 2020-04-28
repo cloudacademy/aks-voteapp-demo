@@ -6,7 +6,7 @@ The following instructions are used to demonstrate how to provision an AKS clust
 
 The cloud native application is architected using microservices and is presented to the user as a web application. The application frontend provides the end-user with the ability to vote on one of 6 programming languages: C#, Python, JavaScript, Go, Java, and/or NodeJS. Voting results in AJAX calls being made from the browser to an API which in turn then saves the results into a MongoDB database.
 
-![VoteApp](./docs/voteapp.png)
+![VoteApp](./doc/voteapp.png)
 
 Along the way, you'll get to see how to work with the following AKS cluster resources:
 * Pods
@@ -19,7 +19,7 @@ Along the way, you'll get to see how to work with the following AKS cluster reso
 * IngressController
 * Ingress
 
-![AKSDeployment](./docs/AKSDeployment.png)
+![AKSDeployment](./doc/AKSDeployment.png)
 
 # STEP 1:
 Create a new AKS cluster
@@ -375,7 +375,7 @@ kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
 
 # STEP 10:
 
-![AKSDeployment - API](./docs/AKSDeployment-API.png)
+![AKSDeployment - API](./doc/AKSDeployment-API.png)
 
 Deploy the API consisting of a Deployment, Service, and Ingress:
 
@@ -510,7 +510,7 @@ curl -s $API_PUBLIC_FQDN/languages/nodejs | jq .
 
 # STEP 12:
 
-![AKSDeployment](./docs/AKSDeployment-Frontend.png)
+![AKSDeployment](./doc/AKSDeployment-Frontend.png)
 
 Create a new frontend Deployment
 
