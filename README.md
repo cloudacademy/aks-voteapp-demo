@@ -640,7 +640,7 @@ Now test the full end-to-end application using the Chrome browser...
 
 Note: Use the Developer Tools within the Chrome browser to record, filter, and observe the AJAX traffic (XHR) which is generated when any of the +1 vote buttons are clicked.
 
-![VoteApp](./docs/voteapp.png)
+![VoteApp](./doc/voteapp.png)
 
 # STEP 14
 
