@@ -97,7 +97,7 @@ az aks create \
   --name $CLUSTER_NAME \
   --resource-group $RESOURCE_GROUP \
   --node-count 2 \
-  --node-vm-size B2ms \
+  --node-vm-size Standard_B2ms \
   --vm-set-type VirtualMachineScaleSets \
   --kubernetes-version 1.15.10 \
   --network-plugin azure \
@@ -164,7 +164,9 @@ Notes:
 
 ```
 kubectl get svc aks-nginx-ingress-controller -o json
+
 INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-controller -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
 echo INGRESS_PUBLIC_IP: $INGRESS_PUBLIC_IP
 
 API_PUBLIC_FQDN=api.$INGRESS_PUBLIC_IP.nip.io
