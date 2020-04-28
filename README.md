@@ -155,9 +155,10 @@ helm install aks-nginx-ingress stable/nginx-ingress
 Query the Nginx Ingress Controller and determine the public ip address that has been assigned to it.
 
 Notes:
-1. The public IP address will be used to create both the API and Frontend service FQDNs
+1. The public IP address will be used to create both the API and Frontend service FQDNs used later on
 2. The API FQDN will be used to within the API's Ingress resource for host based path routing
-3. The https://nip.io/ dynamic DNS service is being used to provide wildcard DNS
+3. The Frontend FQDN will be used to within the Frontend's Ingress resource for host based path routing
+4. The https://nip.io/ dynamic DNS service is being used to provide wildcard DNS
 
 ```
 kubectl get svc aks-nginx-ingress-controller -o json
@@ -449,8 +450,6 @@ EOF
 
 ## STEP 10.3:
 
-```
-
 API: create **ingress** resource
 
 ```
@@ -511,7 +510,7 @@ curl -s $API_PUBLIC_FQDN/languages/nodejs | jq .
 Create a new frontend Deployment
 
 Notes: 
-1. The value stored in the ```$API_PUBLIC_FQDN``` variable is injected into the frontend container's ```REACT_APP_APIHOSTPORT``` environment var - this tells the frontend where to send API AJAX calls to, once the frontend is loaded into the users browser
+1. The value stored in the ```$API_PUBLIC_FQDN``` variable is injected into the frontend container's ```REACT_APP_APIHOSTPORT``` environment var - this tells the frontend where to send browser initiated API AJAX calls
 
 ## STEP 12.1:
 
@@ -605,7 +604,7 @@ metadata:
   namespace: cloudacademy
 spec:
   rules:
-    - host: frontend.$INGRESS_PUBLIC_IP.nip.io
+    - host: $FRONTEND_PUBLIC_FQDN
       http:
         paths:
           - backend:
@@ -626,14 +625,6 @@ kubectl get pods -l role=frontend
 # STEP 13
 
 Use the ```curl``` command to test the application via the frontend route url
-
-```
-INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-controller -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-echo INGRESS_PUBLIC_IP: $INGRESS_PUBLIC_IP
-
-FRONTEND_PUBLIC_FQDN=frontend.$INGRESS_PUBLIC_IP.nip.io
-echo FRONTEND_PUBLIC_FQDN: $FRONTEND_PUBLIC_FQDN
-```
 
 ```
 curl -s -I $FRONTEND_PUBLIC_FQDN
