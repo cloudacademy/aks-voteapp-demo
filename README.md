@@ -137,6 +137,21 @@ Install the Nginx Ingress Controller. This will allow us to direct inbound exter
 
 ## STEP 3.1:
 
+Create the ```nginx-ingress``` namespace - holds the Nginx Ingress Controller components.
+
+```
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-ingress
+  labels:
+    name: nginx-ingress
+EOF
+```
+
+## STEP 3.2:
+
 Use Helm to install the Nginx Ingress Controller.
 
 Notes:
@@ -149,12 +164,20 @@ helm version
 helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 helm repo update
 helm search repo stable
-helm install aks-nginx-ingress stable/nginx-ingress
+helm install aks-nginx-ingress stable/nginx-ingress --namespace nginx-ingress
 ```
 
-## STEP 3.2:
+## STEP 3.3:
 
 Query the Nginx Ingress Controller and determine the public ip address that has been assigned to it.
+
+Wait until the Nginx Ingress Controller has been allocated a public IP address
+
+```
+kubectl get svc aks-nginx-ingress-controller -n nginx-ingress --watch
+```
+
+Use ```Ctrl-C``` key sequence to exit the watch
 
 Notes:
 1. The public IP address will be used to create both the API and Frontend service FQDNs used later on
@@ -163,9 +186,9 @@ Notes:
 4. The https://nip.io/ dynamic DNS service is being used to provide wildcard DNS
 
 ```
-kubectl get svc aks-nginx-ingress-controller -o json
+kubectl get svc aks-nginx-ingress-controller -n nginx-ingress -o json
 
-INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-controller -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-controller -n nginx-ingress -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 echo INGRESS_PUBLIC_IP: $INGRESS_PUBLIC_IP
 
@@ -178,7 +201,7 @@ echo FRONTEND_PUBLIC_FQDN: $FRONTEND_PUBLIC_FQDN
 
 # STEP 4:
 
-Create the ```cloudacademy``` project (namespace)
+Create the ```cloudacademy``` namespace - holds the main sample cloud native application components
 
 ```
 cat << EOF | kubectl apply -f -
@@ -186,6 +209,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: cloudacademy
+  labels:
+    name: cloudacademy
 EOF
 ```
 
@@ -285,7 +310,7 @@ kubectl get pods --show-labels
 kubectl get pods -l role=db
 ```
 
-Note: **Ctrl-C** to exit the watch
+Use ```Ctrl-C``` key sequence to exit the watch
 
 Display the MongoDB Pods, Persistent Volumes and Persistent Volume Claims
 
@@ -666,4 +691,123 @@ kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
 
 # STEP 9
 
+Setup and install Network Policies to control pod-to-pod traffic
+
+# STEP 9.1
+
+```
+cat << EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: cloudacademy
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+EOF
+```
+
+# STEP 9.2
+
+```
+cat << EOF | kubectl apply -f -
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: allow-from-mongo-to-mongo
+  namespace: cloudacademy
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            role: db
+EOF
+```
+
+# STEP 9.3
+
+```
+cat << EOF | kubectl apply -f -
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: allow-from-api-to-mongo
+  namespace: cloudacademy
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            role: api
+EOF
+```
+
+# STEP 9.4
+
+```
+cat << EOF | kubectl apply -f -
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: allow-from-ingress-to-api
+  namespace: cloudacademy
+spec:
+  podSelector:
+    matchLabels:
+      role: api
+  ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            app: nginx-ingress
+        namespaceSelector:
+          matchLabels:
+            name: nginx-ingress
+EOF
+```
+
+# STEP 9.5
+
+```
+cat << EOF | kubectl apply -f -
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: allow-from-ingress-to-frontend
+  namespace: cloudacademy
+spec:
+  podSelector:
+    matchLabels:
+      role: frontend
+  ingress:
+  - from:
+      - podSelector:
+          matchLabels:
+            app: nginx-ingress
+        namespaceSelector:
+          matchLabels:
+            name: nginx-ingress
+EOF
+```
+
+
+
+
+
+
+
+
+# STEP 9
+
 When you've finished with the AKS cluster and no longer need tear it down to avoid ongoing charges!!
+
+
