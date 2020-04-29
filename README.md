@@ -31,6 +31,7 @@ Define the name of the cluster and the azure resource group it will be allocated
 ```
 CLUSTER_NAME=akstest
 RESOURCE_GROUP=aks
+VNET_NAME=cloudacademy-aks-vnet
 ```
 
 ## STEP 1.2:
@@ -53,7 +54,7 @@ Create a new vnet and subnet for the AKS cluster
 
 ```
 az network vnet create \
-    --name cloudacademy-aks-vnet \
+    --name $VNET_NAME \
     --resource-group $RESOURCE_GROUP \
     --address-prefixes 10.0.0.0/8 \
     --subnet-name aks-subnet \
@@ -66,7 +67,7 @@ Assign the contributor role to the service principal scoped on the vnet previous
 
 ```
 VNETID=$(az network vnet show \
-  --name cloudacademy-aks-vnet \
+  --name $VNET_NAME \
   --resource-group $RESOURCE_GROUP \
   --query id \
   -o tsv)
@@ -87,7 +88,7 @@ Create the AKS cluster and place it in the vnet subnet previously created
 SUBNETID=$(az network vnet subnet show \
   --name aks-subnet \
   --resource-group $RESOURCE_GROUP \
-  --vnet-name cloudacademy-aks-vnet \
+  --vnet-name $VNET_NAME \
   --query id \
   -o tsv)
 
@@ -366,22 +367,26 @@ exit
 
 ## STEP 5.6:
 
-Initialise the Mongo database replica set
+On the ```mongo-0``` pod, launch the ```mongo``` shell
 
 ```
-cat > db.init.js << EOF
+kubectl exec -it mongo-0 mongo
+```
+
+Initialise the mongo database replica set
+
+```
 rs.initiate();
 rs.add("mongo-1.mongo:27017");
 rs.add("mongo-2.mongo:27017");
 cfg = rs.conf();
 cfg.members[0].host = "mongo-0.mongo:27017";
 rs.reconfig(cfg, {force: true});
-sleep(5000);
-EOF
+
+exit
 ```
 
 ```
-kubectl exec -it mongo-0 mongo < db.init.js
 kubectl exec -it mongo-0 -- mongo --eval "rs.status()"
 ```
 
@@ -445,8 +450,21 @@ spec:
     spec:
       containers:
       - name: api
-        image: cloudacademydevops/api:v1
+        image: cloudacademydevops/api:v2
         imagePullPolicy: Always
+        env:
+          - name: MONGO_CONN_STR
+            value: mongodb://mongo-0.mongo,mongo-1.mongo,mongo-2.mongo:27017/langdb?replicaSet=rs0
+          - name: MONGO_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: mongodb-secret
+                key: username
+          - name: MONGO_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongodb-secret
+                key: password
         ports:
         - containerPort: 8080
         livenessProbe:
@@ -695,6 +713,8 @@ Setup and install Network Policies to control pod-to-pod traffic
 
 # STEP 9.1
 
+Default deny all network policy for pod-to-pod traffic within the ```cloudacademy``` namespace
+
 ```
 cat << EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
@@ -710,6 +730,8 @@ EOF
 ```
 
 # STEP 9.2
+
+Allow mongo-to-mongo pod traffic, required for MongoDb data replication
 
 ```
 cat << EOF | kubectl apply -f -
@@ -731,6 +753,8 @@ EOF
 ```
 
 # STEP 9.3
+
+Allow 
 
 ```
 cat << EOF | kubectl apply -f -
@@ -799,15 +823,42 @@ spec:
 EOF
 ```
 
+# Step 10
 
+Setup and configure an AKS virtual pool
 
+## Step 10.1
 
+Create a new virtual pool subnet in the same vnet that the cluster was provisioned in.
 
+```
+az network vnet subnet create \
+    --resource-group $RESOURCE_GROUP \
+    --vnet-name $VNET_NAME \
+    --name aks-subnet-virtnode \
+    --address-prefixes 10.241.0.0/16
+```
 
+## Step 10.2
 
+Enable virtual pools
 
-# STEP 9
+```
+az aks enable-addons \
+  --name $CLUSTER_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --addons virtual-node \
+  --subnet-name aks-subnet-virtnode
+```
+
+## Step 10.3
+
+Test to see if virtual pool is now available
+
+```
+kubectl get nodes
+```
+
+# STEP 11
 
 When you've finished with the AKS cluster and no longer need tear it down to avoid ongoing charges!!
-
-
