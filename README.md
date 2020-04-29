@@ -239,6 +239,8 @@ kubectl get storageclass
 
 Create a new Mongo StatefulSet name ```mongo```
 
+Note: security (--auth flag) hasn't been enabled on the MongoDb database - done to make the demonstration quicker.
+
 ```
 cat << EOF | kubectl apply -f -
 apiVersion: apps/v1beta1
@@ -395,7 +397,7 @@ kubectl exec -it mongo-0 -- mongo --eval "rs.status()"
 Load the initial voting app data into the Mongo database
 
 ```
-cat > db.load.js << EOF
+cat << EOF | kubectl exec -it mongo-0 mongo
 use langdb;
 db.languages.insert({"name" : "csharp", "codedetail" : { "usecase" : "system, web, server-side", "rank" : 5, "compiled" : false, "homepage" : "https://dotnet.microsoft.com/learn/csharp", "download" : "https://dotnet.microsoft.com/download/", "votes" : 0}});
 db.languages.insert({"name" : "python", "codedetail" : { "usecase" : "system, web, server-side", "rank" : 3, "script" : false, "homepage" : "https://www.python.org/", "download" : "https://www.python.org/downloads/", "votes" : 0}});
@@ -408,8 +410,11 @@ db.languages.find().pretty();
 EOF
 ```
 
+## STEP 5.8:
+
+Confirm data has been loaded correctly
+
 ```
-kubectl exec -it mongo-0 mongo < db.load.js
 kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
 ```
 
@@ -420,6 +425,23 @@ kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
 Deploy the API consisting of a Deployment, Service, and Ingress:
 
 ## STEP 6.1:
+
+Create a secret to store the mongodb connection credentials
+
+Note: this is for demonstration purposes only - security (auth) hasn't been enabled on the MongoDb database.
+
+```
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongodb-secret
+  namespace: cloudacademy
+data:
+  username: YWRtaW4=
+  password: cGFzc3dvcmQ=
+EOF
+```
 
 API: create **deployment** resource
 
@@ -754,7 +776,7 @@ EOF
 
 # STEP 9.3
 
-Allow 
+Allow api-to-mongo pod traffic, required to allow the API to read/write data into the MongoDb database
 
 ```
 cat << EOF | kubectl apply -f -
@@ -776,6 +798,8 @@ EOF
 ```
 
 # STEP 9.4
+
+Allow ingress-to-api pod traffic, required to allow API ajax calls from the browser
 
 ```
 cat << EOF | kubectl apply -f -
@@ -800,6 +824,8 @@ EOF
 ```
 
 # STEP 9.5
+
+Allow ingress-to-frontend pod traffic, required to allow the frontend (html, js, css) to be requested by the browser
 
 ```
 cat << EOF | kubectl apply -f -
