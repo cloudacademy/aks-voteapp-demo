@@ -378,26 +378,24 @@ exit
 Confirm that the mongo shell can resolve each of the 3 mongo headless service assigned dns names:
 
 ```
-kubectl exec -it mongo-0 -- mongo mongo-0.mongo --eval "exit"
+for i in {0..2}; do kubectl exec -it mongo-0 -- mongo mongo-$i.mongo --eval "print('mongo-$i.mongo succeeded')"; done
 ```
 
-On the ```mongo-0``` pod, launch the ```mongo``` shell
+On the ```mongo-0``` pod, initialise the mongo database replica set
 
 ```
-kubectl exec -it mongo-0 mongo
-```
-
-Initialise the mongo database replica set
-
-```
+cat << EOF | kubectl exec -it mongo-0 mongo
 rs.initiate();
+sleep(2000);
 rs.add("mongo-1.mongo:27017");
+sleep(2000);
 rs.add("mongo-2.mongo:27017");
+sleep(2000);
 cfg = rs.conf();
 cfg.members[0].host = "mongo-0.mongo:27017";
 rs.reconfig(cfg, {force: true});
-
-exit
+sleep(5000);
+EOF
 ```
 
 ```
