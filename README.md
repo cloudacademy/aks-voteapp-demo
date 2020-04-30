@@ -254,6 +254,9 @@ metadata:
 spec:
   serviceName: mongo
   replicas: 3
+  selector:
+    matchLabels:
+      role: db
   template:
     metadata:
       labels:
