@@ -904,42 +904,6 @@ Query the MongoDb database directly to observe the updated vote data
 kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
 ```
 
-# Step 11
-
-Setup and configure an AKS virtual pool
-
-## Step 11.1
-
-Create a new virtual pool subnet in the same vnet that the cluster was provisioned in.
-
-```
-az network vnet subnet create \
-    --resource-group $RESOURCE_GROUP \
-    --vnet-name $VNET_NAME \
-    --name aks-subnet-virtnode \
-    --address-prefixes 10.241.0.0/16
-```
-
-## Step 11.2
-
-Enable virtual pools
-
-```
-az aks enable-addons \
-  --name $CLUSTER_NAME \
-  --resource-group $RESOURCE_GROUP \
-  --addons virtual-node \
-  --subnet-name aks-subnet-virtnode
-```
-
-## Step 11.3
-
-Test to see if virtual pool is now available
-
-```
-kubectl get nodes
-```
-
-# STEP 12
+# STEP 11
 
 When you've finished with the AKS cluster and no longer need tear it down to avoid ongoing charges!!
