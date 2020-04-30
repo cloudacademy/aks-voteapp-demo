@@ -761,6 +761,12 @@ spec:
 EOF
 ```
 
+Test to confirm that the frontend traffic path is now blocked
+
+```
+curl -vv -i $FRONTEND_PUBLIC_FQDN
+```
+
 # STEP 9.2
 
 Allow mongo-to-mongo pod traffic, required for MongoDb data replication
@@ -859,11 +865,50 @@ spec:
 EOF
 ```
 
+# STEP 9.6
+
+Allow ingress-to-kube-dns from pod traffic in cloudacademy namespace, required to allow pod dns traffic to resolve
+
+```
+cat << EOF | kubectl apply -f -
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: allow-from-cloudacademy-ns-to-kube-dns
+  namespace: kube-system
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: kube-dns
+  ingress:
+  - from:
+      - namespaceSelector:
+          matchLabels:
+            name: cloudacademy
+EOF
+```
+
 # Step 10
+
+Test to confirm that the frontend traffic path is now repaired and working
+
+```
+curl -vv -i $FRONTEND_PUBLIC_FQDN
+```
+
+Test the application again within the browser and generate some voting traffic
+
+Query the MongoDb database directly to observe the updated vote data
+
+```
+kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
+```
+
+# Step 11
 
 Setup and configure an AKS virtual pool
 
-## Step 10.1
+## Step 11.1
 
 Create a new virtual pool subnet in the same vnet that the cluster was provisioned in.
 
@@ -875,7 +920,7 @@ az network vnet subnet create \
     --address-prefixes 10.241.0.0/16
 ```
 
-## Step 10.2
+## Step 11.2
 
 Enable virtual pools
 
@@ -887,7 +932,7 @@ az aks enable-addons \
   --subnet-name aks-subnet-virtnode
 ```
 
-## Step 10.3
+## Step 11.3
 
 Test to see if virtual pool is now available
 
@@ -895,6 +940,6 @@ Test to see if virtual pool is now available
 kubectl get nodes
 ```
 
-# STEP 11
+# STEP 12
 
 When you've finished with the AKS cluster and no longer need tear it down to avoid ongoing charges!!
