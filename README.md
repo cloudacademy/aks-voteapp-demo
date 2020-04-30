@@ -84,6 +84,9 @@ az role assignment create \
 
 Create the AKS cluster and place it in the vnet subnet previously created
 
+Standard_B2ms
+1.15.10
+
 ```
 SUBNETID=$(az network vnet subnet show \
   --name aks-subnet \
@@ -98,9 +101,9 @@ az aks create \
   --name $CLUSTER_NAME \
   --resource-group $RESOURCE_GROUP \
   --node-count 2 \
-  --node-vm-size Standard_B2ms \
+  --node-vm-size Standard_D4s_v3 \
   --vm-set-type VirtualMachineScaleSets \
-  --kubernetes-version 1.15.10 \
+  --kubernetes-version 1.16.7 \
   --network-plugin azure \
   --service-cidr 10.0.0.0/16 \
   --dns-service-ip 10.0.0.10 \
@@ -243,7 +246,7 @@ Note: security (--auth flag) hasn't been enabled on the MongoDb database - done 
 
 ```
 cat << EOF | kubectl apply -f -
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mongo
@@ -368,6 +371,12 @@ exit
 ```
 
 ## STEP 5.6:
+
+Confirm that the mongo shell can resolve each of the 3 mongo headless service assigned dns names:
+
+```
+kubectl exec -it mongo-0 -- mongo mongo-0.mongo --eval "exit"
+```
 
 On the ```mongo-0``` pod, launch the ```mongo``` shell
 
