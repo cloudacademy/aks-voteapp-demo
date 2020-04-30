@@ -440,6 +440,13 @@ Create a secret to store the mongodb connection credentials
 
 Note: this is for demonstration purposes only - security (auth) hasn't been enabled on the MongoDb database.
 
+The username and password values need to be ```base64``` encode first like so
+
+```
+echo -n 'admin' | base64
+echo -n 'password' | base64
+```
+
 ```
 cat << EOF | kubectl apply -f -
 apiVersion: v1
