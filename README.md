@@ -9,15 +9,16 @@ The cloud native application is architected using microservices and is presented
 ![VoteApp](./doc/voteapp.png)
 
 Along the way, you'll get to see how to work with the following AKS cluster resources:
-* Pods
-* ReplicaSets
-* Deployments
-* Services
-* StatefulSets
-* PersistentVolumes
-* PersistentVolumeClaims
-* IngressController
+* Namespace
+* Secret
+* Deployment
+* Service
+* StatefulSet
+* PersistentVolume
+* PersistentVolumeClaim
+* IngressController (Nginx)
 * Ingress
+* NetworkPolicy
 
 ![AKSDeployment](./doc/aks-deployment.png)
 
@@ -914,3 +915,9 @@ kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
 # STEP 11
 
 When you've finished with the AKS cluster and no longer need tear it down to avoid ongoing charges!!
+
+Good luck with your AKS adventures!!
+
+:rocket:
+
+http://cloudacademy.com
