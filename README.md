@@ -104,7 +104,7 @@ az aks create \
   --node-count 2 \
   --node-vm-size Standard_D4s_v3 \
   --vm-set-type VirtualMachineScaleSets \
-  --kubernetes-version 1.16.7 \
+  --kubernetes-version 1.16.13 \
   --network-plugin azure \
   --service-cidr 10.0.0.0/16 \
   --dns-service-ip 10.0.0.10 \
