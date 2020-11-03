@@ -6,6 +6,8 @@ The following instructions are used to demonstrate how to provision an AKS clust
 
 The cloud native application is architected using microservices and is presented to the user as a web application. The application frontend provides the end-user with the ability to vote on one of 6 programming languages: C#, Python, JavaScript, Go, Java, and/or NodeJS. Voting results in AJAX calls being made from the browser to an API which in turn then saves the results into a MongoDB database.
 
+![AKSDeployment](./doc/aks-deployment.png)
+
 # Updates/Changelog
 Tue  3 Nov 2020 20:51:59 NZDT
 * Updated instructions and retested end-to-end
@@ -32,8 +34,6 @@ Along the way, you'll get to see how to work with the following AKS cluster reso
 * IngressController (Nginx)
 * Ingress
 * NetworkPolicy
-
-![AKSDeployment](./doc/aks-deployment.png)
 
 # STEP 1:
 Create a new AKS cluster
