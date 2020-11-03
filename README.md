@@ -6,6 +6,19 @@ The following instructions are used to demonstrate how to provision an AKS clust
 
 The cloud native application is architected using microservices and is presented to the user as a web application. The application frontend provides the end-user with the ability to vote on one of 6 programming languages: C#, Python, JavaScript, Go, Java, and/or NodeJS. Voting results in AJAX calls being made from the browser to an API which in turn then saves the results into a MongoDB database.
 
+# Updates/Changelog
+Tue  3 Nov 2020 20:51:59 NZDT
+* Updated instructions and retested end-to-end
+* Upgraded cluster version to 1.18.8
+* Mongo deployment now pinned down to use 4.2 to ensure replication setup initiates
+* Helm nginx-ingress deployment updated
+* Minor fixes to various ```kubectl``` commands
+
+# Client Tools
+Tested with the following client tool versions
+* ```kubectl``` 1.18.8
+* ```helm``` 3.4.0
+
 ![VoteApp](./doc/voteapp.png)
 
 Along the way, you'll get to see how to work with the following AKS cluster resources:
@@ -104,7 +117,7 @@ az aks create \
   --node-count 2 \
   --node-vm-size Standard_D4s_v3 \
   --vm-set-type VirtualMachineScaleSets \
-  --kubernetes-version 1.16.13 \
+  --kubernetes-version 1.18.8 \
   --network-plugin azure \
   --service-cidr 10.0.0.0/16 \
   --dns-service-ip 10.0.0.10 \
@@ -161,15 +174,15 @@ Use Helm to install the Nginx Ingress Controller.
 
 Notes:
 1. The ```helm``` client needs to be installed locally
-2. This has beem successfully tested with ```helm``` version v3.0.2
+2. This has beem successfully tested with ```helm``` version v3.4.0
 3. The ```helm``` client authenticates to the AKS cluster using the same ```~/.kube/config``` credentials established earlier
 
 ```
 helm version
-helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo add nginx-stable https://helm.nginx.com/stable
 helm repo update
-helm search repo stable
-helm install aks-nginx-ingress stable/nginx-ingress --namespace nginx-ingress
+helm search repo nginx-ingress
+helm install aks-nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress
 ```
 
 ## STEP 3.3:
@@ -179,7 +192,7 @@ Query the Nginx Ingress Controller and determine the public ip address that has 
 Wait until the Nginx Ingress Controller has been allocated a public IP address
 
 ```
-kubectl get svc aks-nginx-ingress-controller -n nginx-ingress --watch
+kubectl get svc aks-nginx-ingress-nginx-ingress -n nginx-ingress --watch
 ```
 
 Use ```Ctrl-C``` key sequence to exit the watch
@@ -191,9 +204,9 @@ Notes:
 4. The https://nip.io/ dynamic DNS service is being used to provide wildcard DNS
 
 ```
-kubectl get svc aks-nginx-ingress-controller -n nginx-ingress -o json
+kubectl get svc aks-nginx-ingress-nginx-ingress -n nginx-ingress -o json
 
-INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-controller -n nginx-ingress -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-nginx-ingress -n nginx-ingress -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 echo INGRESS_PUBLIC_IP: $INGRESS_PUBLIC_IP
 
@@ -280,7 +293,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
         - name: mongo
-          image: mongo
+          image: mongo:4.2
           command:
             - "numactl"
             - "--interleave=all"
@@ -363,7 +376,7 @@ kubectl get svc
 Examine the DNS records for the Mongo Headless Service
 
 ```
-kubectl run --generator=run-pod/v1 --rm utils -it --image eddiehale/utils bash
+kubectl run --rm utils -it --image eddiehale/utils -- bash
 ```
 
 Within the new utils container run the following DNS queries
@@ -385,7 +398,7 @@ for i in {0..2}; do kubectl exec -it mongo-0 -- mongo mongo-$i.mongo --eval "pri
 On the ```mongo-0``` pod, initialise the mongo database replica set
 
 ```
-cat << EOF | kubectl exec -it mongo-0 mongo
+cat << EOF | kubectl exec -it mongo-0 -- mongo
 rs.initiate();
 sleep(2000);
 rs.add("mongo-1.mongo:27017");
@@ -408,7 +421,7 @@ kubectl exec -it mongo-0 -- mongo --eval "rs.status()"
 Load the initial voting app data into the Mongo database
 
 ```
-cat << EOF | kubectl exec -it mongo-0 mongo
+cat << EOF | kubectl exec -it mongo-0 -- mongo
 use langdb;
 db.languages.insert({"name" : "csharp", "codedetail" : { "usecase" : "system, web, server-side", "rank" : 5, "compiled" : false, "homepage" : "https://dotnet.microsoft.com/learn/csharp", "download" : "https://dotnet.microsoft.com/download/", "votes" : 0}});
 db.languages.insert({"name" : "python", "codedetail" : { "usecase" : "system, web, server-side", "rank" : 3, "script" : false, "homepage" : "https://www.python.org/", "download" : "https://www.python.org/downloads/", "votes" : 0}});
@@ -733,6 +746,12 @@ curl -s -I $FRONTEND_PUBLIC_FQDN
 curl -s -i $FRONTEND_PUBLIC_FQDN
 ```
 
+Generate the frontend URL
+
+```
+echo http://$FRONTEND_PUBLIC_FQDN
+```
+
 Now test the full end-to-end application using the Chrome browser...
 
 Note: Use the Developer Tools within the Chrome browser to record, filter, and observe the AJAX traffic (XHR) which is generated when any of the +1 vote buttons are clicked.
@@ -840,7 +859,7 @@ spec:
   - from:
       - podSelector:
           matchLabels:
-            app: nginx-ingress
+            app: aks-nginx-ingress-nginx-ingress
         namespaceSelector:
           matchLabels:
             name: nginx-ingress
@@ -866,7 +885,7 @@ spec:
   - from:
       - podSelector:
           matchLabels:
-            app: nginx-ingress
+            app: aks-nginx-ingress-nginx-ingress
         namespaceSelector:
           matchLabels:
             name: nginx-ingress
