@@ -9,6 +9,15 @@ The cloud native application is architected using microservices and is presented
 ![AKSDeployment](./doc/aks-deployment.png)
 
 # Updates/Changelog
+Mon 16 Jan 2023 11:57:20 NZDT
+* Updated instructions and retested end-to-end
+* Added instruction to create resource group
+* Added ```--location``` parameter to commands that use it
+* Removed deprecated ```--skip-assignment``` parameter
+* Upgraded cluster version to **1.25.2**
+* Updated the Ingress resources to **networking.k8s.io/v1**
+* Updated networkpolicy curl commands to include ```--max-time 5``` to control connection timeout
+
 Tue  3 Nov 2020 20:51:59 NZDT
 * Updated instructions and retested end-to-end
 * Upgraded cluster version to 1.18.8
@@ -18,8 +27,8 @@ Tue  3 Nov 2020 20:51:59 NZDT
 
 # Client Tools
 Tested with the following client tool versions
-* ```kubectl``` 1.18.8
-* ```helm``` 3.4.0
+* ```kubectl``` 1.25.4
+* ```helm``` 3.10.3
 
 ![VoteApp](./doc/voteapp.png)
 
@@ -39,21 +48,38 @@ Along the way, you'll get to see how to work with the following AKS cluster reso
 Create a new AKS cluster
 
 ## STEP 1.1:
-
-Define the name of the cluster and the azure resource group it will be allocated in
+Authenticate the Azure CLI. In the terminal execute the following command:
 
 ```
-CLUSTER_NAME=akstest
-RESOURCE_GROUP=aks
-VNET_NAME=cloudacademy-aks-vnet
+az login
 ```
 
 ## STEP 1.2:
 
+Define the variables used during the setup and installation:
+
+```
+CLUSTER_NAME=akstest
+RESOURCE_GROUP=aks
+LOCATION=westus
+VNET_NAME=cloudacademy-aks-vnet
+K8S_VERSION=1.25.2
+```
+
+## STEP 1.3:
+
+Create new resource group.
+
+```
+az group create --location $LOCATION --resource-group $RESOURCE_GROUP
+```
+
+## STEP 1.4:
+
 Create a new service principal. The AKS cluster will later be created with this.
 
 ```
-SP=$(az ad sp create-for-rbac --name spdemocluster --skip-assignment)
+SP=$(az ad sp create-for-rbac --name spdemocluster)
 
 APPID=$(echo $SP | jq -r .appId)
 PASSWD=$(echo $SP | jq -r .password)
@@ -62,7 +88,7 @@ echo APPID: $APPID
 echo PASSWD: $PASSWD
 ```
 
-## STEP 1.3:
+## STEP 1.5:
 
 Create a new vnet and subnet for the AKS cluster
 
@@ -70,12 +96,13 @@ Create a new vnet and subnet for the AKS cluster
 az network vnet create \
     --name $VNET_NAME \
     --resource-group $RESOURCE_GROUP \
+    --location $LOCATION \
     --address-prefixes 10.0.0.0/8 \
     --subnet-name aks-subnet \
     --subnet-prefix 10.240.0.0/16
 ```
 
-## STEP 1.4:
+## STEP 1.6:
 
 Assign the contributor role to the service principal scoped on the vnet previously created
 
@@ -94,7 +121,7 @@ az role assignment create \
   --role Contributor
 ```
 
-## STEP 1.5:
+## STEP 1.7:
 
 Create the AKS cluster and place it in the vnet subnet previously created
 
@@ -114,10 +141,11 @@ echo SUBNETID: $SUBNETID
 az aks create \
   --name $CLUSTER_NAME \
   --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
   --node-count 2 \
   --node-vm-size Standard_D4s_v3 \
   --vm-set-type VirtualMachineScaleSets \
-  --kubernetes-version 1.18.8 \
+  --kubernetes-version $K8S_VERSION \
   --network-plugin azure \
   --service-cidr 10.0.0.0/16 \
   --dns-service-ip 10.0.0.10 \
@@ -139,7 +167,7 @@ You've just baked yourself a fresh AKS Kubernetes cluster!!
 Test the kubectl client cluster authencation
 
 ```
-az aks get-credentials -g aks --name akstest --admin
+az aks get-credentials -g $RESOURCE_GROUP --name $CLUSTER_NAME --admin
 kubectl get nodes
 ```
 
@@ -151,7 +179,7 @@ kubectl config current-context
 
 # STEP 3:
 
-Install the Nginx Ingress Controller. This will allow us to direct inbound exteranl calls to the Frontend and API services that will be deployed into the AKS cluster.
+Install the Nginx Ingress Controller. This will allow us to direct inbound exteranl **HTTP** calls to the **Frontend** and **API** services that will be deployed into the AKS cluster.
 
 ## STEP 3.1:
 
@@ -174,8 +202,10 @@ Use Helm to install the Nginx Ingress Controller.
 
 Notes:
 1. The ```helm``` client needs to be installed locally
-2. This has beem successfully tested with ```helm``` version v3.4.0
+2. This has beem successfully tested with ```helm``` version v3.10.3
 3. The ```helm``` client authenticates to the AKS cluster using the same ```~/.kube/config``` credentials established earlier
+4. This has beem successfully tested with the helm chart ```nginx-stable/nginx-ingress``` version 0.16.0 and app version 3.0.0
+
 
 ```
 helm version
@@ -376,15 +406,13 @@ kubectl get svc
 Examine the DNS records for the Mongo Headless Service
 
 ```
-kubectl run --rm utils -it --image eddiehale/utils -- bash
+kubectl run -i --tty --restart=Never --rm utils --image cloudacademydevops/networkutils:v2 -- host mongo
 ```
 
-Within the new utils container run the following DNS queries
+Examine the individual DNS records for the Mongo Headless Service
 
 ```
-host mongo
-for i in {0..2}; do host mongo-$i.mongo; done
-exit
+kubectl run -i --tty --restart=Never --rm utils --image cloudacademydevops/networkutils:v2 -- bash -c 'for i in {0..2}; do host mongo-$i.mongo; done'
 ```
 
 ## STEP 5.6:
@@ -392,10 +420,10 @@ exit
 Confirm that the mongo shell can resolve each of the 3 mongo headless service assigned dns names:
 
 ```
-for i in {0..2}; do kubectl exec -it mongo-0 -- mongo mongo-$i.mongo --eval "print('mongo-$i.mongo succeeded')"; done
+for i in {0..2}; do kubectl exec -it mongo-0 -- mongo mongo-$i.mongo --eval "print('mongo-$i.mongo succeeded')" && echo; done
 ```
 
-On the ```mongo-0``` pod, initialise the mongo database replica set
+On the ```mongo-0``` pod, initialise the mongo database replica set:
 
 ```
 cat << EOF | kubectl exec -it mongo-0 -- mongo
@@ -412,8 +440,10 @@ sleep(5000);
 EOF
 ```
 
+Confirm the mongo database replication status:
+
 ```
-kubectl exec -it mongo-0 -- mongo --eval "rs.status()"
+kubectl exec -it mongo-0 -- mongo --eval "rs.status()" | grep "PRIMARY\|SECONDARY"
 ```
 
 ## STEP 5.7:
@@ -429,8 +459,6 @@ db.languages.insert({"name" : "javascript", "codedetail" : { "usecase" : "web, c
 db.languages.insert({"name" : "go", "codedetail" : { "usecase" : "system, web, server-side", "rank" : 12, "compiled" : true, "homepage" : "https://golang.org", "download" : "https://golang.org/dl/", "votes" : 0}});
 db.languages.insert({"name" : "java", "codedetail" : { "usecase" : "system, web, server-side", "rank" : 1, "compiled" : true, "homepage" : "https://www.java.com/en/", "download" : "https://www.java.com/en/download/", "votes" : 0}});
 db.languages.insert({"name" : "nodejs", "codedetail" : { "usecase" : "system, web, server-side", "rank" : 20, "script" : false, "homepage" : "https://nodejs.org/en/", "download" : "https://nodejs.org/en/download/", "votes" : 0}});
-
-db.languages.find().pretty();
 EOF
 ```
 
@@ -565,22 +593,26 @@ API: create **ingress** resource
 
 ```
 cat << EOF | kubectl apply -f -
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations:
-    kubernetes.io/ingress.class: nginx
   name: api
   namespace: cloudacademy
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx
   rules:
     - host: $API_PUBLIC_FQDN
       http:
         paths:
-          - backend:
-              serviceName: api
-              servicePort: 8080
-            path: /
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8080
 EOF
 ```
 
@@ -595,7 +627,7 @@ EOF
 kubectl rollout status deployment api
 kubectl get pods
 kubectl get pods -l role=api
-kubectl logs API_POD_NAME_HERE
+kubectl logs <API_POD_NAME_HERE>
 kubectl get svc
 ```
 
@@ -708,22 +740,26 @@ Frontend: create **ingress** resource
 
 ```
 cat << EOF | kubectl apply -f -
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations:
-    kubernetes.io/ingress.class: nginx
   name: frontend
   namespace: cloudacademy
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx
   rules:
     - host: $FRONTEND_PUBLIC_FQDN
       http:
         paths:
-          - backend:
-              serviceName: frontend
-              servicePort: 8080
-            path: /
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 8080
 EOF
 ```
 
@@ -791,7 +827,7 @@ EOF
 Test to confirm that the frontend traffic path is now blocked
 
 ```
-curl -vv -i $FRONTEND_PUBLIC_FQDN
+curl -vv -i --max-time 5 $FRONTEND_PUBLIC_FQDN
 ```
 
 # STEP 9.2
@@ -920,7 +956,7 @@ EOF
 Test to confirm that the frontend traffic path is now repaired and working
 
 ```
-curl -vv -i $FRONTEND_PUBLIC_FQDN
+curl -vv -i --max-time 5 $FRONTEND_PUBLIC_FQDN
 ```
 
 Test the application again within the browser and generate some voting traffic
