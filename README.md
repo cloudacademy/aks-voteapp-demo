@@ -15,6 +15,7 @@ Mon 16 Jan 2023 11:57:20 NZDT
 * Added ```--location``` parameter to commands that use it
 * Removed deprecated ```--skip-assignment``` parameter
 * Upgraded cluster version to **1.25.2**
+* Updated DNS testing to use the container image ```cloudacademydevops/networkutils:v2```
 * Updated the Ingress resources to **networking.k8s.io/v1**
 * Updated networkpolicy curl commands to include ```--max-time 5``` to control connection timeout
 
