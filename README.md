@@ -969,7 +969,11 @@ kubectl exec -it mongo-0 -- mongo langdb --eval "db.languages.find().pretty()"
 
 # STEP 11
 
-When you've finished with the AKS cluster and no longer need tear it down to avoid ongoing charges!!
+When you've finished with the AKS cluster and no longer need it **tear it down** to avoid ongoing **charges**!!
+
+```
+az aks delete --name $CLUSTER_NAME -g $RESOURCE_GROUP
+```
 
 Good luck with your AKS adventures!!
 
