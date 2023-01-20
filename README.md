@@ -28,6 +28,7 @@ Tue  3 Nov 2020 20:51:59 NZDT
 
 # Client Tools
 Tested with the following client tool versions
+* ```az``` 2.44.1
 * ```kubectl``` 1.25.4
 * ```helm``` 3.10.3
 
@@ -60,11 +61,13 @@ az login
 Define the variables used during the setup and installation:
 
 ```
+{
 CLUSTER_NAME=akstest
 RESOURCE_GROUP=aks
 LOCATION=westus
 VNET_NAME=cloudacademy-aks-vnet
 K8S_VERSION=1.25.2
+}
 ```
 
 ## STEP 1.3:
