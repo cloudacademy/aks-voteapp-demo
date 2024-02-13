@@ -153,7 +153,6 @@ az aks create \
   --network-plugin azure \
   --service-cidr 10.0.0.0/16 \
   --dns-service-ip 10.0.0.10 \
-  --docker-bridge-address 172.17.0.1/16 \
   --vnet-subnet-id $SUBNETID \
   --generate-ssh-keys \
   --network-policy azure \
