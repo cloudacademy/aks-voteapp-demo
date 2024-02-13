@@ -225,7 +225,7 @@ Query the Nginx Ingress Controller and determine the public ip address that has 
 Wait until the Nginx Ingress Controller has been allocated a public IP address
 
 ```
-kubectl get svc aks-nginx-ingress-nginx-ingress -n nginx-ingress --watch
+kubectl get svc aks-nginx-ingress-controller -n nginx-ingress --watch
 ```
 
 Use ```Ctrl-C``` key sequence to exit the watch
@@ -237,9 +237,9 @@ Notes:
 4. The https://nip.io/ dynamic DNS service is being used to provide wildcard DNS
 
 ```
-kubectl get svc aks-nginx-ingress-nginx-ingress -n nginx-ingress -o json
+kubectl get svc aks-nginx-ingress-controller -n nginx-ingress -o json
 
-INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-nginx-ingress -n nginx-ingress -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-controller -n nginx-ingress -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 echo INGRESS_PUBLIC_IP: $INGRESS_PUBLIC_IP
 
@@ -898,7 +898,7 @@ spec:
   - from:
       - podSelector:
           matchLabels:
-            app: aks-nginx-ingress-nginx-ingress
+            app: aks-nginx-ingress-controller
         namespaceSelector:
           matchLabels:
             name: nginx-ingress
@@ -924,7 +924,7 @@ spec:
   - from:
       - podSelector:
           matchLabels:
-            app: aks-nginx-ingress-nginx-ingress
+            app: aks-nginx-ingress-controller
         namespaceSelector:
           matchLabels:
             name: nginx-ingress
