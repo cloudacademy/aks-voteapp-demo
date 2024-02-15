@@ -9,6 +9,12 @@ The cloud native application is architected using microservices and is presented
 ![AKSDeployment](./doc/aks-deployment.png)
 
 # Updates/Changelog
+Thu 15 Feb 2024
+* Removed `--docker-bridge-address` option on `az aks create` as this has been deprecated
+* Corrected name of nginx svc from `aks-nginx-ingress-nginx-ingress` to `aks-nginx-ingress-controller`
+* Increased Kubernetes version to 1.27.7 to align with current Azure default
+* Updated network policy selectors to use correct `podSelector` labels for nginx
+
 Mon 16 Jan 2023 11:57:20 NZDT
 * Updated instructions and retested end-to-end
 * Added instruction to create resource group
@@ -898,7 +904,7 @@ spec:
   - from:
       - podSelector:
           matchLabels:
-            app: aks-nginx-ingress-controller
+            app.kubernetes.io/instance: aks-nginx-ingress
         namespaceSelector:
           matchLabels:
             name: nginx-ingress
@@ -924,7 +930,7 @@ spec:
   - from:
       - podSelector:
           matchLabels:
-            app: aks-nginx-ingress-controller
+            app.kubernetes.io/instance: aks-nginx-ingress
         namespaceSelector:
           matchLabels:
             name: nginx-ingress
