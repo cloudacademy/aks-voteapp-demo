@@ -9,6 +9,13 @@ The cloud native application is architected using microservices and is presented
 ![AKSDeployment](./doc/aks-deployment.png)
 
 # Updates/Changelog
+Thu 15 Feb 2024
+* Removed `--docker-bridge-address` option on `az aks create` as this has been deprecated
+* Corrected name of nginx svc from `aks-nginx-ingress-nginx-ingress` to `aks-nginx-ingress-controller`
+* Increased Kubernetes version to 1.27.7 to align with current Azure default
+* Updated network policy selectors to use correct `podSelector` labels for nginx
+* Added commands to delete the service principle
+
 Mon 16 Jan 2023 11:57:20 NZDT
 * Updated instructions and retested end-to-end
 * Added instruction to create resource group
@@ -29,7 +36,7 @@ Tue  3 Nov 2020 20:51:59 NZDT
 # Client Tools
 Tested with the following client tool versions
 * ```az``` 2.44.1
-* ```kubectl``` 1.25.4
+* ```kubectl``` 1.27.7
 * ```helm``` 3.10.3
 
 ![VoteApp](./doc/voteapp.png)
@@ -66,7 +73,7 @@ CLUSTER_NAME=akstest
 RESOURCE_GROUP=aks
 LOCATION=westus
 VNET_NAME=cloudacademy-aks-vnet
-K8S_VERSION=1.25.2
+K8S_VERSION=1.27.7
 }
 ```
 
@@ -153,7 +160,6 @@ az aks create \
   --network-plugin azure \
   --service-cidr 10.0.0.0/16 \
   --dns-service-ip 10.0.0.10 \
-  --docker-bridge-address 172.17.0.1/16 \
   --vnet-subnet-id $SUBNETID \
   --generate-ssh-keys \
   --network-policy azure \
@@ -226,7 +232,7 @@ Query the Nginx Ingress Controller and determine the public ip address that has 
 Wait until the Nginx Ingress Controller has been allocated a public IP address
 
 ```
-kubectl get svc aks-nginx-ingress-nginx-ingress -n nginx-ingress --watch
+kubectl get svc aks-nginx-ingress-controller -n nginx-ingress --watch
 ```
 
 Use ```Ctrl-C``` key sequence to exit the watch
@@ -238,9 +244,9 @@ Notes:
 4. The https://nip.io/ dynamic DNS service is being used to provide wildcard DNS
 
 ```
-kubectl get svc aks-nginx-ingress-nginx-ingress -n nginx-ingress -o json
+kubectl get svc aks-nginx-ingress-controller -n nginx-ingress -o json
 
-INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-nginx-ingress -n nginx-ingress -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+INGRESS_PUBLIC_IP=$(kubectl get svc aks-nginx-ingress-controller -n nginx-ingress -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 echo INGRESS_PUBLIC_IP: $INGRESS_PUBLIC_IP
 
@@ -899,7 +905,7 @@ spec:
   - from:
       - podSelector:
           matchLabels:
-            app: aks-nginx-ingress-nginx-ingress
+            app.kubernetes.io/instance: aks-nginx-ingress
         namespaceSelector:
           matchLabels:
             name: nginx-ingress
@@ -925,7 +931,7 @@ spec:
   - from:
       - podSelector:
           matchLabels:
-            app: aks-nginx-ingress-nginx-ingress
+            app.kubernetes.io/instance: aks-nginx-ingress
         namespaceSelector:
           matchLabels:
             name: nginx-ingress
@@ -977,6 +983,19 @@ When you've finished with the AKS cluster and no longer need it **tear it down**
 
 ```
 az aks delete --name $CLUSTER_NAME -g $RESOURCE_GROUP
+```
+
+# Step 12
+
+Find the ID of the `spdemocluster` service principle we created earlier, and delete it:
+
+```
+sp_id=$(az ad sp list --display-name spdemocluster --query "[0].id" -o tsv)
+echo sp_id=$sp_id
+az ad sp delete --id $sp_id
+app_id=$(az ad app list --display-name spdemocluster --query "[0].id" -o tsv)
+echo app_id=$app_id
+az ad app delete --id $app_id
 ```
 
 Good luck with your AKS adventures!!
