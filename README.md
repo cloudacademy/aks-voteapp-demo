@@ -14,6 +14,7 @@ Thu 15 Feb 2024
 * Corrected name of nginx svc from `aks-nginx-ingress-nginx-ingress` to `aks-nginx-ingress-controller`
 * Increased Kubernetes version to 1.27.7 to align with current Azure default
 * Updated network policy selectors to use correct `podSelector` labels for nginx
+* Added commands to delete the service principle
 
 Mon 16 Jan 2023 11:57:20 NZDT
 * Updated instructions and retested end-to-end
@@ -982,6 +983,19 @@ When you've finished with the AKS cluster and no longer need it **tear it down**
 
 ```
 az aks delete --name $CLUSTER_NAME -g $RESOURCE_GROUP
+```
+
+# Step 12
+
+Find the ID of the `spdemocluster` service principle we created earlier, and delete it:
+
+```
+sp_id=$(az ad sp list --display-name spdemocluster --query "[0].id" -o tsv)
+echo sp_id=$sp_id
+az ad sp delete --id $sp_id
+app_id=$(az ad app list --display-name spdemocluster --query "[0].id" -o tsv)
+echo app_id=$app_id
+az ad app delete --id $app_id
 ```
 
 Good luck with your AKS adventures!!
